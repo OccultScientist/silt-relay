@@ -8,7 +8,7 @@ async function initialise() {
 
   const files = ["silt_relay.py", "data/releases.json", "data/vectors.tsv"];
   await Promise.all(files.map(async (file) => {
-    const response = await fetch(file);
+    const response = await fetch(file, { cache: "no-cache" });
     if (!response.ok) throw new Error(`Could not load ${file}: ${response.status}`);
     py.FS.writeFile(file, new Uint8Array(await response.arrayBuffer()));
   }));
@@ -18,9 +18,11 @@ import json
 from silt_relay import Archive, DATA, MODES
 archive = Archive.from_directory(DATA)
 
-def run_question(action, question, mode):
+def run_question(action, question, mode, vinyl_only):
     if action == "compare":
         result = {name: archive.search(question, name) for name in MODES}
+    elif action == "dig":
+        result = archive.dig(question, mode, vinyl_only=vinyl_only)
     else:
         result = archive.answer(question, mode)
     return json.dumps(result, ensure_ascii=False)
@@ -39,7 +41,7 @@ self.onmessage = async ({ data }) => {
     const py = await engine;
     const runQuestion = py.globals.get("run_question");
     try {
-      const result = JSON.parse(runQuestion(data.action, data.question, data.mode));
+      const result = JSON.parse(runQuestion(data.action, data.question, data.mode, data.vinylOnly));
       postMessage({ type: "result", action: data.action, question: data.question, result });
     } finally {
       runQuestion.destroy();

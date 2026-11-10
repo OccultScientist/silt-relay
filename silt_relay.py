@@ -2,7 +2,7 @@
 
 import argparse
 import base64
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import json
 import math
 from pathlib import Path
@@ -14,6 +14,7 @@ import unicodedata
 DATA = Path(__file__).resolve().parent / "data"
 MODES = ("bm25", "semantic", "hybrid")
 DEFAULT_MODE = "bm25"
+DIG_MODE = "hybrid"
 TOP_K = 5
 MAX_QUESTION = 400
 FIELDS = {
@@ -37,6 +38,31 @@ which who will with would you your tell about show please
 """.split())
 
 
+FORMAT_TERMS = re.compile(
+    r"\b(?:(?P<vinyl_size>(?:7|10|12) inch(?: vinyl)?)|(?P<vinyl>vinyl|wax)|(?P<cassette>cassettes?)|"
+    r"(?P<digital>digital)|(?P<cd>cds?|compact discs?))\b"
+)
+DIG_WORDS = frozenset("""
+add added addition after any archive available between both bonus change changed changes compare compared could documented
+edition editions ep find format formats get give got include included interested like list looking
+match matches music notes only original originals pressing proposal proposed record records related release released releases
+reissue reissued reissues silt relay something sound sounding sounds start that track tracks tracklist tracklists vinyl
+press pressed title titles unknown want worth
+""".split())
+SOUND_CUES = {
+    "airy": ("breathy", "space", "sparse"),
+    "dreamy": ("breathy", "choral", "soft", "warbling"),
+    "echoes": ("echo",),
+    "fuzzy": ("saturated", "hissing"),
+    "horns": ("brass", "horn"),
+    "keys": ("piano", "organ", "keyboard"),
+    "mellow": ("soft", "warm", "restrained"),
+    "sparse": ("stripped", "restrained", "space"),
+    "vocals": ("vocal",),
+    "warm": ("rounded", "soft"),
+}
+
+
 def words(text):
     folded = unicodedata.normalize("NFKD", text.casefold())
     return re.findall(r"[a-z0-9]+", folded.encode("ascii", "ignore").decode("ascii"))
@@ -44,6 +70,12 @@ def words(text):
 
 def keywords(text):
     return list(dict.fromkeys(word for word in words(text) if word not in STOP))
+
+
+def format_key(match):
+    if match.lastgroup == "vinyl_size":
+        return match.group().split()[0] + "-inch vinyl"
+    return match.lastgroup
 
 
 def question_text(question):
@@ -126,7 +158,7 @@ class Archive:
     def close(self):
         self.db.close()
 
-    def search(self, query, mode=DEFAULT_MODE, *, limit=TOP_K, code=None, field=None):
+    def search(self, query, mode=DEFAULT_MODE, *, limit=TOP_K, code=None, field=None, text_only=False):
         if mode not in MODES:
             raise ValueError(f"Choose one of {', '.join(MODES)}.")
         query = question_text(query)
@@ -141,6 +173,8 @@ class Archive:
         lexical = []
         if mode in ("bm25", "hybrid"):
             match = " OR ".join(f'"{term}"' for term in terms)
+            if text_only:
+                match = f"text : ({match})"
             lexical = [
                 source_id for source_id, in self.db.execute(
                     "SELECT id FROM archive WHERE archive MATCH ? "
@@ -175,6 +209,150 @@ class Archive:
             }
             for p in (self.passages[source_id] for source_id in ranked[:limit])
         ]
+
+    def _family(self, code):
+        if code not in self.releases:
+            raise ValueError(f"Catalogue number {code} is outside this archive.")
+        original = self.releases[code].get("reissue_of", code)
+        return [
+            original,
+            *(release["code"] for release in self.releases.values() if release.get("reissue_of") == original),
+        ]
+
+    def _source(self, code, field):
+        return asdict(self.passages[f"{code}:{field}"])
+
+    def editions(self, code):
+        original, *reissues = self._family(code.strip().upper())
+        return [self._compare_editions(original, reissue) for reissue in reissues]
+
+    def _compare_editions(self, original, reissue):
+        fields = ("date", "format", "tracks")
+        before = {field: self._source(original, field) for field in fields}
+        after = {field: self._source(reissue, field) for field in fields}
+        # The first quoted phrase is the release title. The remaining quotes
+        # are the track titles as printed in the cited note.
+        before_tracks = re.findall(r"“([^”]+)”", before["tracks"]["text"])[1:]
+        after_tracks = re.findall(r"“([^”]+)”", after["tracks"]["text"])[1:]
+        return {
+            "original": before,
+            "reissue": after,
+            "relationship": self._source(reissue, "edition"),
+            "added": [track for track in after_tracks if track not in before_tracks],
+            "original_only": [track for track in before_tracks if track not in after_tracks],
+        }
+
+    def dig(self, query, mode=DIG_MODE, *, vinyl_only=False):
+        query = question_text(query)
+        normalised = " ".join(words(query))
+        requested = list(FORMAT_TERMS.finditer(normalised))
+        formats = list(dict.fromkeys(format_key(match) for match in requested))
+        either = len(requested) > 1 and re.search(
+            r"\bor\b", normalised[requested[0].end():requested[-1].start()]
+        ) is not None
+        reissues_only = bool(re.search(
+            r"\b(?:with (?:a |an )?reissues?|(?:was|were) reissued|only reissues?|reissues? only)\b", normalised
+        ))
+        target_groups = self.resolve(query)
+        if not target_groups and re.search(r"\breissues?\b", normalised):
+            reissues_only = True
+        targets = {self._family(code)[0] for group in target_groups for code in group}
+        sound_query = FORMAT_TERMS.sub(" ", normalised)
+        sound_query = re.sub(r"\b(?:drum (?:and )?bass|dnb|sr\d{3})\b", " ", sound_query)
+        named_titles = {
+            " ".join(words(title))
+            for group in target_groups for code in group
+            for title in [self.releases[code]["title"], *self.releases[code]["aliases"]]
+        }
+        for title in sorted(named_titles, key=lambda name: (-len(name), name)):
+            sound_query = re.sub(r"\b" + re.escape(title) + r"\b", " ", sound_query)
+        sound_groups = [
+            {word for word in keywords(part) if len(word) > 1 and word not in DIG_WORDS}
+            for part in re.split(r"\bor\b", sound_query)
+        ]
+        sound_alternatives = [group for group in sound_groups if group]
+        terms = [word for word in keywords(sound_query) if len(word) > 1 and word not in DIG_WORDS]
+        result = {
+            "matches": [], "proposals": [], "sound_terms": terms, "formats": formats,
+            "format_alternatives": either, "vinyl_only": vinyl_only, "reissues_only": reissues_only,
+            "compare_requested": bool(re.search(r"\b(?:compare|change|changed|changes|add|added|differences?)\b", normalised)),
+            "message": "",
+        }
+        if re.search(r"\b(?:not|no|without|except|excluding)\b", normalised):
+            result["message"] = "Try phrasing what you want to find. This search handles positive sound and format requests."
+            return result
+        if any(not group for group in target_groups):
+            result["message"] = "That catalogue number is outside this archive."
+            return result
+
+        if terms:
+            expanded = dict.fromkeys(cue for term in terms for cue in (term, *SOUND_CUES.get(term, ())))
+            rank_query = " ".join(expanded)
+            if len(rank_query) > MAX_QUESTION:
+                rank_query = rank_query[:MAX_QUESTION].rsplit(" ", 1)[0]
+            hits = self.search(rank_query, mode, field="sound", text_only=True, limit=len(self.releases))
+        elif targets or formats or vinyl_only or reissues_only:
+            hits = [asdict(passage) for passage in self.passages.values() if passage.field == "sound"]
+        else:
+            return result
+
+        ranked = []
+        for hit in hits:
+            note_words = set(words(hit["text"]))
+            cues = {
+                term: cue for term in terms
+                if (cue := next((word for word in (term, *SOUND_CUES.get(term, ())) if word in note_words), None))
+            }
+            # An embedding may order plausible matches, but it cannot turn a
+            # note with no supporting descriptor into a recommendation.
+            if len(sound_alternatives) > 1 and not any(group <= cues.keys() for group in sound_alternatives):
+                continue
+            if cues or not terms:
+                ranked.append((hit, cues))
+        ranked.sort(key=lambda row: -len(row[1]))
+
+        seen = set()
+        for hit, cues in ranked:
+            family = self._family(hit["code"])
+            original, *reissues = family
+            if original in seen or (targets and original not in targets) or (reissues_only and not reissues):
+                continue
+            seen.add(original)
+            format_sources = [self._source(code, "format") for code in family]
+            documented = {
+                format_key(match) for source in format_sources for match in
+                FORMAT_TERMS.finditer(" ".join(words(source["text"].rpartition(" was ")[2])))
+            }
+            confirmed = documented | {"vinyl"} if any(item.endswith("-inch vinyl") for item in documented) else documented
+            proposed = [
+                self._source(code, "edition") for code in family
+                if self.releases[code].get("vinyl_proposed")
+            ]
+            unmatched = [term for term in terms if term not in cues]
+            format_matches = set(formats) & confirmed
+            passes = (bool(format_matches) if either else set(formats) <= confirmed)
+            if (vinyl_only and "vinyl" not in confirmed) or not passes:
+                possible_formats = confirmed | {"vinyl"}
+                could_pass = (bool(set(formats) & possible_formats) if either else set(formats) <= possible_formats)
+                if proposed and "vinyl" not in confirmed and could_pass:
+                    result["proposals"].append({"sound": hit, "sources": proposed, "matched": cues, "unmatched": unmatched})
+                continue
+
+            result["matches"].append({
+                "code": original,
+                "title": self.releases[original]["title"],
+                "artist": self.releases[original]["artist"],
+                "sound": hit,
+                "matched": cues,
+                "unmatched": unmatched,
+                "formats": sorted(documented),
+                "format_sources": format_sources,
+                "proposed": proposed,
+                "comparisons": [self._compare_editions(original, code) for code in reissues],
+            })
+            if len(result["matches"]) == TOP_K:
+                break
+        return result
 
     def resolve(self, text):
         tokens = words(text)
@@ -271,6 +449,13 @@ class Archive:
             if not groups:
                 result["unanswered"].append(f"I couldn't identify the release in “{part.strip()}”")
                 continue
+            if re.search(r"\b(?:reissue|recut)\b", intent):
+                linked = [self._family(code)[1:] for group in groups for code in group
+                          if "reissue_of" not in self.releases[code]]
+                if any(linked):
+                    codes = ", ".join(code for family in linked for code in family)
+                    result["unanswered"].append(f"Use {codes} to ask about the linked reissue.")
+                    continue
             if len(groups) > 1 and len(fields) > 1:
                 result["unanswered"].append("Ask about one catalogue detail at a time when comparing releases.")
                 continue
@@ -307,12 +492,25 @@ class Archive:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("question")
-    parser.add_argument("--mode", choices=MODES, default=DEFAULT_MODE)
-    parser.add_argument("--search", action="store_true", help="Show ranked passages without composing an answer.")
+    parser.add_argument("--mode", choices=MODES)
+    operation = parser.add_mutually_exclusive_group()
+    operation.add_argument("--search", action="store_true", help="Show ranked passages without composing an answer.")
+    operation.add_argument("--dig", action="store_true", help="Search sound notes and show related editions.")
+    operation.add_argument("--editions", action="store_true", help="Compare editions for a catalogue number.")
+    parser.add_argument("--vinyl-only", action="store_true", help="With --dig, require a released vinyl edition.")
     args = parser.parse_args()
+    if args.vinyl_only and not args.dig:
+        parser.error("--vinyl-only requires --dig.")
     archive = Archive.from_directory(DATA)
     try:
-        result = archive.search(args.question, args.mode) if args.search else archive.answer(args.question, args.mode)
+        if args.dig:
+            result = archive.dig(args.question, args.mode or DIG_MODE, vinyl_only=args.vinyl_only)
+        elif args.editions:
+            result = archive.editions(args.question)
+        elif args.search:
+            result = archive.search(args.question, args.mode or DEFAULT_MODE)
+        else:
+            result = archive.answer(args.question, args.mode or DEFAULT_MODE)
     except ValueError as error:
         parser.error(str(error))
     finally:
