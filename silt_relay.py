@@ -243,6 +243,8 @@ class Archive:
                 continue
 
             fields = [field for field, pattern in FIELDS.items() if re.search(pattern, intent)]
+            # The first pass gave Glass Current's digital date for a vinyl question.
+            # A real quote still needs to answer the question as phrased.
             date_words = {
                 "date", "dates", "release", "released", "come", "came", "out",
                 "compare", "catalogue", "number", "original", "format", "formats",
@@ -263,6 +265,8 @@ class Archive:
             if len(groups) > 1 and len(fields) > 1:
                 result["unanswered"].append("Ask about one catalogue detail at a time when comparing releases.")
                 continue
+            # A second title can be missing from this little catalogue. Keep the
+            # first answer and leave the other half visibly open.
             if len(groups) == 1:
                 segments = re.split(r"\s+(?:and|or|with)\s+", part, flags=re.IGNORECASE)
                 for segment in segments[1:]:
@@ -284,6 +288,7 @@ class Archive:
                         result["unanswered"].append(f"I found no {field} passage for {code} in this search mode.")
 
         result["retrieved"] = list(evidence.values())
+        # Visitors should see the same words when they open the cited passage.
         result["claims"] = [{"text": hit["text"], "source_id": hit["id"]} for hit in evidence.values()]
         if evidence:
             result["outcome"] = "partially_answered" if result["unanswered"] else "answered"

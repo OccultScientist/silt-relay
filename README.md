@@ -37,6 +37,10 @@ Open [localhost:8000](http://127.0.0.1:8000). The first build downloads and veri
 
 A passage can match a search and still be irrelevant to the question. The evidence panel distinguishes cited passages from search candidates. For example, a note recording a proposed vinyl pressing gives no basis for saying it shipped.
 
+### A lesson from the first pass
+
+Toby asked us to check that each citation supports the specific claim. In review, the first version answered a question about the proposed *Glass Current* vinyl edition with the date of the digital EP. The date came straight from the notes and still answered the wrong question. There is now a [regression test](tests/test_engine.py) for that distinction.
+
 ## Evaluation
 
 The labelled set has 10 development questions and 25 evaluation questions. It exercises paraphrases, multi-release questions, ambiguous editions, unsupported requests and a prompt asking the system to invent a figure. The labels name expected passages, outcomes and clarification choices.
