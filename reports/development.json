@@ -1,0 +1,80 @@
+{
+  "split": "development",
+  "cases": 10,
+  "python": "3.13.12",
+  "sqlite": "3.53.3",
+  "modes": {
+    "bm25": {
+      "passage_recall_at_5": [
+        4,
+        4
+      ],
+      "answer_outcome_accuracy": [
+        6,
+        6
+      ],
+      "citation_support": [
+        5,
+        5
+      ],
+      "required_answer_evidence_recall": [
+        5,
+        5
+      ],
+      "withholding_correctness": [
+        3,
+        3
+      ],
+      "invalid_citations": [],
+      "failures": []
+    },
+    "semantic": {
+      "passage_recall_at_5": [
+        4,
+        4
+      ],
+      "answer_outcome_accuracy": [
+        6,
+        6
+      ],
+      "citation_support": [
+        5,
+        5
+      ],
+      "required_answer_evidence_recall": [
+        5,
+        5
+      ],
+      "withholding_correctness": [
+        3,
+        3
+      ],
+      "invalid_citations": [],
+      "failures": []
+    },
+    "hybrid": {
+      "passage_recall_at_5": [
+        4,
+        4
+      ],
+      "answer_outcome_accuracy": [
+        6,
+        6
+      ],
+      "citation_support": [
+        5,
+        5
+      ],
+      "required_answer_evidence_recall": [
+        5,
+        5
+      ],
+      "withholding_correctness": [
+        3,
+        3
+      ],
+      "invalid_citations": [],
+      "failures": []
+    }
+  }
+}

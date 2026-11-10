@@ -1,0 +1,232 @@
+{
+  "split": "evaluation",
+  "cases": 25,
+  "python": "3.13.12",
+  "sqlite": "3.53.3",
+  "modes": {
+    "bm25": {
+      "passage_recall_at_5": [
+        7,
+        9
+      ],
+      "answer_outcome_accuracy": [
+        15,
+        17
+      ],
+      "citation_support": [
+        10,
+        10
+      ],
+      "required_answer_evidence_recall": [
+        10,
+        12
+      ],
+      "withholding_correctness": [
+        9,
+        9
+      ],
+      "invalid_citations": [],
+      "failures": [
+        {
+          "id": "E13",
+          "expected_outcome": "answered",
+          "outcome": "insufficient_evidence",
+          "missing": [
+            "SR020:edition"
+          ],
+          "unexpected": []
+        },
+        {
+          "id": "E15",
+          "expected_outcome": "answered",
+          "outcome": "needs_clarification",
+          "missing": [
+            "SR007:format"
+          ],
+          "unexpected": []
+        },
+        {
+          "id": "E20",
+          "missing": [
+            "SR014:sound"
+          ],
+          "top": []
+        },
+        {
+          "id": "E23",
+          "missing": [
+            "SR017:sound"
+          ],
+          "top": [
+            "SR016:tracks",
+            "SR008:sound"
+          ]
+        }
+      ]
+    },
+    "semantic": {
+      "passage_recall_at_5": [
+        5,
+        9
+      ],
+      "answer_outcome_accuracy": [
+        15,
+        17
+      ],
+      "citation_support": [
+        10,
+        10
+      ],
+      "required_answer_evidence_recall": [
+        10,
+        12
+      ],
+      "withholding_correctness": [
+        9,
+        9
+      ],
+      "invalid_citations": [],
+      "failures": [
+        {
+          "id": "E13",
+          "expected_outcome": "answered",
+          "outcome": "insufficient_evidence",
+          "missing": [
+            "SR020:edition"
+          ],
+          "unexpected": []
+        },
+        {
+          "id": "E15",
+          "expected_outcome": "answered",
+          "outcome": "needs_clarification",
+          "missing": [
+            "SR007:format"
+          ],
+          "unexpected": []
+        },
+        {
+          "id": "E20",
+          "missing": [
+            "SR014:sound"
+          ],
+          "top": [
+            "SR009:edition",
+            "SR004:edition",
+            "SR001:tracks",
+            "SR018:tracks",
+            "SR001:format"
+          ]
+        },
+        {
+          "id": "E22",
+          "missing": [
+            "SR007:sound"
+          ],
+          "top": [
+            "SR011:sound",
+            "SR012:sound",
+            "SR001:sound",
+            "SR017:sound",
+            "SR009:sound"
+          ]
+        },
+        {
+          "id": "E23",
+          "missing": [
+            "SR017:sound"
+          ],
+          "top": [
+            "SR002:sound",
+            "SR018:sound",
+            "SR007:edition",
+            "SR019:date",
+            "SR009:tracks"
+          ]
+        },
+        {
+          "id": "E24",
+          "missing": [
+            "SR011:edition"
+          ],
+          "top": [
+            "SR009:edition",
+            "SR004:format",
+            "SR004:edition",
+            "SR013:format",
+            "SR018:format"
+          ]
+        }
+      ]
+    },
+    "hybrid": {
+      "passage_recall_at_5": [
+        7,
+        9
+      ],
+      "answer_outcome_accuracy": [
+        15,
+        17
+      ],
+      "citation_support": [
+        10,
+        10
+      ],
+      "required_answer_evidence_recall": [
+        10,
+        12
+      ],
+      "withholding_correctness": [
+        9,
+        9
+      ],
+      "invalid_citations": [],
+      "failures": [
+        {
+          "id": "E13",
+          "expected_outcome": "answered",
+          "outcome": "insufficient_evidence",
+          "missing": [
+            "SR020:edition"
+          ],
+          "unexpected": []
+        },
+        {
+          "id": "E15",
+          "expected_outcome": "answered",
+          "outcome": "needs_clarification",
+          "missing": [
+            "SR007:format"
+          ],
+          "unexpected": []
+        },
+        {
+          "id": "E20",
+          "missing": [
+            "SR014:sound"
+          ],
+          "top": [
+            "SR009:edition",
+            "SR004:edition",
+            "SR001:tracks",
+            "SR018:tracks",
+            "SR001:format"
+          ]
+        },
+        {
+          "id": "E23",
+          "missing": [
+            "SR017:sound"
+          ],
+          "top": [
+            "SR008:sound",
+            "SR016:tracks",
+            "SR002:sound",
+            "SR018:sound",
+            "SR007:edition"
+          ]
+        }
+      ]
+    }
+  }
+}
