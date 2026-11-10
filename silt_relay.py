@@ -225,13 +225,22 @@ class Archive:
             question, flags=re.IGNORECASE,
         )
         evidence = {}
+        has_context = False
         for part in filter(None, parts):
             groups = self.resolve(part)
-            if not groups and len(targets) == 1 and re.search(
-                r"\b(?:it|its|that release)\b|^did the vinyl\b", part, re.IGNORECASE
-            ):
-                groups = targets
-            intent = re.sub(r"\bsr\d{3}\b", " ", " ".join(words(part)))
+            has_context = has_context or any(groups)
+            intent = " ".join(words(part))
+            if not groups and len(targets) == 1:
+                # Toby's Glass Current question exposed a follow-up with no pronoun.
+                # Match the whole clause so a request naming a new title stays separate.
+                bare_followup = has_context and re.fullmatch(
+                    r"what (?:is|are|was|were|s) the "
+                    r"(?:track ?lists?|track listings?|tracks|formats?|release dates?|credits?)",
+                    intent,
+                )
+                if bare_followup or re.search(r"\b(?:it|its|that release)\b|^did the vinyl\b", intent):
+                    groups = targets
+            intent = re.sub(r"\bsr\d{3}\b", " ", intent)
             for group in groups:
                 for code in group:
                     # Strip release names so words inside a title cannot create a field request.
