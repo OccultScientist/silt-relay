@@ -29,6 +29,19 @@ class ArchiveTest(unittest.TestCase):
         self.assertEqual(result["outcome"], "partially_answered")
         self.assertEqual([claim["source_id"] for claim in result["claims"]], ["SR004:date"])
 
+    def test_followup_track_list_inherits_the_single_named_release(self):
+        question = "When did Glass Current come out, and what is the track list?"
+        result = self.archive.answer(question)
+        self.assertEqual(result["outcome"], "answered")
+        self.assertEqual([claim["source_id"] for claim in result["claims"]], ["SR004:date", "SR004:tracks"])
+        self.assertFalse(result["unanswered"])
+
+    def test_track_list_for_unknown_release_does_not_inherit_context(self):
+        question = "When did Glass Current come out, and what is the track list for Sunken Semaphore?"
+        result = self.archive.answer(question)
+        self.assertEqual(result["outcome"], "partially_answered")
+        self.assertEqual([claim["source_id"] for claim in result["claims"]], ["SR004:date"])
+
     def test_followup_pronoun_can_inherit_single_release(self):
         result = self.archive.answer("When did SR004 come out, and what format was it?")
         self.assertEqual(result["outcome"], "answered")
