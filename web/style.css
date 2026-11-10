@@ -75,3 +75,31 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .4
 footer p { margin: 0; }
 @media (max-width: 780px) { .workbench { grid-template-columns: 1fr; } }
 @media (max-width: 390px) { .frame { width: calc(100% - 1.4rem); } nav { gap: .7rem; } }
+
+[hidden] { display: none !important; }
+h1 { letter-spacing: -.055em; }
+.view-switch { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 0 1rem; }
+.view-switch button {
+  border: 1px solid var(--line); border-radius: .4rem; color: var(--muted);
+  background: var(--panel); padding: .45rem .8rem; font-weight: 650;
+}
+.view-switch button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.check { display: flex; align-items: center; gap: .5rem; color: var(--muted); margin: .45rem 0 .8rem; font-size: .88rem; }
+.check input { accent-color: var(--accent); }
+.dig-criteria { color: var(--muted); font-size: .87rem; margin-bottom: .55rem; }
+.crate-stack { display: grid; gap: .9rem; margin-top: .9rem; }
+.crate-record { border: 1px solid var(--line); border-radius: .45rem; padding: 1rem; background: #151b14; }
+.crate-record .eyebrow { margin-bottom: .27rem; }
+.crate-record h3 { font-size: 1.32rem; letter-spacing: -.035em; margin-top: 0; }
+.crate-record h4 { margin: .7rem 0 .32rem; font-size: .9rem; }
+.release-note summary { font-size: .87rem; }
+.release-note .source-code { white-space: nowrap; }
+.edition-comparison > summary { color: var(--accent); }
+.edition-changes { background: var(--field); padding: .4rem .8rem; margin: .5rem 0; border-left: 2px solid var(--accent); }
+.edition-changes p { font-size: .9rem; margin-bottom: .35rem; }
+.edition-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; margin-bottom: .45rem; }
+.edition { min-width: 0; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: .3rem; }
+.edition > p { font-size: .86rem; margin: 0 0 .5rem; }
+.proposal { border-color: #6c6248; }
+.proposal .eyebrow { color: #e5ce89; }
+@media (max-width: 520px) { .edition-grid { grid-template-columns: 1fr; } }

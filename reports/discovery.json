@@ -1,0 +1,91 @@
+{
+  "split": "discovery",
+  "cases": 17,
+  "python": "3.13.12",
+  "sqlite": "3.53.3",
+  "modes": {
+    "bm25": {
+      "full_case_passes": [
+        16,
+        17
+      ],
+      "expected_family_recall": [
+        13,
+        13
+      ],
+      "required_source_recall": [
+        35,
+        35
+      ],
+      "tracklist_changes_correct": [
+        3,
+        3
+      ],
+      "withholding_correctness": [
+        8,
+        8
+      ],
+      "invalid_citations": [],
+      "failures": [
+        {
+          "id": "C13",
+          "top": [
+            "SR010",
+            "SR005",
+            "SR014",
+            "SR007"
+          ],
+          "expected_first": "SR005"
+        }
+      ]
+    },
+    "semantic": {
+      "full_case_passes": [
+        17,
+        17
+      ],
+      "expected_family_recall": [
+        13,
+        13
+      ],
+      "required_source_recall": [
+        35,
+        35
+      ],
+      "tracklist_changes_correct": [
+        3,
+        3
+      ],
+      "withholding_correctness": [
+        8,
+        8
+      ],
+      "invalid_citations": [],
+      "failures": []
+    },
+    "hybrid": {
+      "full_case_passes": [
+        17,
+        17
+      ],
+      "expected_family_recall": [
+        13,
+        13
+      ],
+      "required_source_recall": [
+        35,
+        35
+      ],
+      "tracklist_changes_correct": [
+        3,
+        3
+      ],
+      "withholding_correctness": [
+        8,
+        8
+      ],
+      "invalid_citations": [],
+      "failures": []
+    }
+  }
+}

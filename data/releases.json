@@ -51,7 +51,8 @@
       "credits": "“Glass Current” is credited to Vela Weir.",
       "sound": "The title track opens with a pitched-down bell before the rolling break comes in.",
       "edition": "A vinyl edition was proposed. This note records the proposal only."
-    }
+    },
+    "vinyl_proposed": true
   },
   {
     "code": "SR005",
@@ -146,8 +147,9 @@
       "tracks": "The tracklist for “Basin Window (2026 Recut)” contains “Basin Window”, “Night Ferry” and “Night Ferry (Quay Dub)”.",
       "credits": "“Basin Window (2026 Recut)” is credited to Loam Tactic.",
       "sound": "The new dub stretches the electric-piano chords and leaves more space around the drums.",
-      "edition": "The reissue added Night Ferry (Quay Dub), mixed by Tessell Quay."
-    }
+      "edition": "The vinyl reissue of SR007 added Night Ferry (Quay Dub), mixed by Tessell Quay."
+    },
+    "reissue_of": "SR007"
   },
   {
     "code": "SR012",
@@ -266,5 +268,20 @@
       "sound": "A skippy break, dry woodblock and two alternating bass tones anchor the title track.",
       "edition": "Orris Vale and Fen Dial produced both tracks together."
     }
+  },
+  {
+    "code": "SR021",
+    "title": "Silt Thread (Dubplate Cut)",
+    "artist": "Orris Vale",
+    "aliases": [],
+    "notes": {
+      "date": "“Silt Thread (Dubplate Cut)” was released on 13 March 2026.",
+      "format": "The release format for “Silt Thread (Dubplate Cut)” was a 10-inch vinyl reissue.",
+      "tracks": "The tracklist for “Silt Thread (Dubplate Cut)” contains “Wet Mark” and “Wet Mark (Dubplate Mix)”.",
+      "credits": "“Silt Thread (Dubplate Cut)” is credited to Orris Vale.",
+      "sound": "The dubplate mix lets the short dub chords ring out over brushed percussion and a deep, rounded sub.",
+      "edition": "The vinyl reissue of SR001 added Wet Mark (Dubplate Mix) and left off Root Chamber."
+    },
+    "reissue_of": "SR001"
   }
 ]

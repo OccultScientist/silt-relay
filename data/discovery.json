@@ -1,0 +1,19 @@
+[
+  {"id":"C01","question":"Find liquid drum & bass with electric piano on vinyl. What changed on the reissue?","first":"SR007","families":["SR007"],"sources":["SR007:sound","SR011:format","SR007:tracks","SR011:tracks","SR011:edition"],"changes":{"SR011":{"added":["Night Ferry (Quay Dub)"],"original_only":[]}}},
+  {"id":"C02","question":"Which records with horns and echoes were pressed on wax?","first":"SR003","families":["SR003"],"sources":["SR003:sound","SR003:format"]},
+  {"id":"C03","question":"Find something dreamy with warbling chords on cassette.","first":"SR009","families":["SR009"],"sources":["SR009:sound","SR009:format"]},
+  {"id":"C04","question":"Pitched-down bell on vinyl","no_matches":true,"proposals":["SR004:edition"],"sources":["SR004:sound","SR004:edition"]},
+  {"id":"C05","question":"What did the vinyl reissue of Silt Thread add?","first":"SR001","families":["SR001"],"sources":["SR001:format","SR021:format","SR001:tracks","SR021:tracks","SR021:edition"],"changes":{"SR021":{"added":["Wet Mark (Dubplate Mix)"],"original_only":["Root Chamber"]}}},
+  {"id":"C06","question":"I want warm chords and a breathy vocal on digital.","first":"SR014","families":["SR014"],"sources":["SR014:sound","SR014:format"]},
+  {"id":"C07","question":"Find piano or warbling chords on vinyl or cassette.","families":["SR007","SR009"],"sources":["SR011:format","SR009:sound","SR009:format"],"source_alternatives":[["SR007:sound","SR011:sound"]],"only_families":true},
+  {"id":"C08","question":"Are there choral pads on cassette?","no_matches":true},
+  {"id":"C09","question":"Saxophone on vinyl","no_matches":true},
+  {"id":"C10","question":"Find liquid electric piano and saxophone on vinyl.","first":"SR007","families":["SR007"],"sources":["SR007:sound","SR011:format"],"unconfirmed":{"SR007":["saxophone"]}},
+  {"id":"C11","question":"Sub-bass drops away briefly, leaving the pitched drums exposed. Digital.","first":"SR017","families":["SR017"],"sources":["SR017:sound","SR017:format"]},
+  {"id":"C12","question":"What changed between Basin Window and Basin Window (2026 Recut)?","first":"SR007","families":["SR007"],"sources":["SR007:date","SR011:date","SR007:tracks","SR011:tracks","SR011:edition"],"changes":{"SR011":{"added":["Night Ferry (Quay Dub)"],"original_only":[]}}},
+  {"id":"C13","question":"I want the sound of a choir on a sparse beat.","first":"SR005","families":["SR005"],"sources":["SR005:sound","SR005:format"]},
+  {"id":"C14","question":"Something with a pitched-down bell available on both vinyl and cassette.","no_matches":true,"proposals":[]},
+  {"id":"C15","question":"Find warbling chords on CD.","no_matches":true},
+  {"id":"C16","question":"Electric piano on 10-inch vinyl","no_matches":true},
+  {"id":"C17","question":"Show vinyl reissues only","families":["SR001","SR007"],"only_families":true,"proposals":[],"sources":["SR011:format","SR021:format"]}
+]

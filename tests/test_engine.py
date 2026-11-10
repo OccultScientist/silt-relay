@@ -127,7 +127,7 @@ class ArchiveTest(unittest.TestCase):
         self.assertTrue(all(hit["semantic_rank"] is not None and hit["bm25_rank"] is None for hit in hits))
 
     def test_every_release_has_a_unique_code(self):
-        self.assertEqual(len(self.archive.releases), 20)
+        self.assertEqual(len(self.archive.releases), 21)
         self.assertEqual(len(self.archive.releases), len({p.code for p in self.archive.passages.values()}))
         self.assertTrue(Path(DATA, "releases.json").exists())
 

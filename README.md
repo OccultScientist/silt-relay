@@ -1,8 +1,10 @@
 # Silt Relay
 
-**An evidence-first search and Q&A demo for a fictional drum & bass label.**
+**A crate-digging tool for a fictional drum & bass label.**
 
-The catalogue contains 20 invented releases. Ask about a date, format, tracklist, credit, sound or edition. The answer opens the exact release-note passage it came from. Try asking about a vinyl pressing that was proposed, sales figures that were never recorded, or a title shared by two editions.
+Start with a sound, an instrument or a mood across 21 fictional releases. Ask for a format and follow the matches to the release notes. For a linked reissue, the reader compares the original and reissue tracklists and shows where each change comes from.
+
+Try “mellow keys and a brushed break on vinyl” or “what did the vinyl reissue of Silt Thread add?”. The catalogue Q&A and ranking comparison are also available from the reader.
 
 [Open the live demo](https://occultscientist.github.io/silt-relay/)
 
@@ -11,14 +13,17 @@ The catalogue contains 20 invented releases. Ask about a date, format, tracklist
 Clone the repository and run these commands in its root. Use Python 3.9+ with SQLite FTS5 enabled. The corpus and the small, quantised embedding table are bundled. The CLI works offline with the Python standard library.
 
 ```sh
+python3 silt_relay.py --dig 'Liquid electric piano on vinyl. What changed on the reissue?'
+python3 silt_relay.py --editions SR001
 python3 silt_relay.py 'When did Glass Current come out, and did the vinyl ship?'
 python3 silt_relay.py 'When was Basin Window released?'
 python3 silt_relay.py --search --mode semantic 'horns and echoes'
+python3 evaluate.py --discovery
 python3 evaluate.py
 python3 -m unittest discover -s tests -v
 ```
 
-The first command returns one claim with `SR004:date` and a separate unanswered part. The second offers two catalogue numbers so you can ask again. Use `--mode bm25`, `semantic` or `hybrid` with either command.
+Use `--mode bm25`, `semantic` or `hybrid` to compare ranking methods. Discovery defaults to hybrid. The exact lookup tool defaults to BM25.
 
 ## Run the browser interface locally
 
@@ -28,6 +33,26 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory _site
 ```
 
 Open [localhost:8000](http://127.0.0.1:8000). The first build downloads and verifies the pinned Pyodide runtime. The staged site is about 14 MB before transport compression. It runs the same Python module in a browser worker. GitHub Pages serves the static build from the `gh-pages` branch, including the runtime, so questions never leave the browser.
+
+## How crate digging works
+
+1. **Read the request.** Pull out supported format and reissue constraints, then rank the sound passages. A small, shared cue vocabulary covers wording such as “horns” and “brass”. Each result exposes the wording it found and any requested cues it could not confirm. Sound ranks can use BM25, local GloVe vectors or reciprocal rank fusion.
+2. **Join the editions.** An explicit catalogue link connects a reissue to its original. The sound note can be from one edition and the format from another, with each citation labelled separately. A proposed pressing is shown separately from released formats.
+3. **Compare the tracklists.** Compute additions and tracks listed only on the original directly from the two quoted tracklists. The comparison also exposes both dates, formats and the note documenting the reissue relationship.
+
+The search handles positive descriptions and a small set of format and relationship phrases. The cues are approximate and the notes describe fictional records. Format evidence establishes the edition documented in the archive.
+
+## Discovery evaluation
+
+Run `python3 evaluate.py --discovery` against the [17 labelled requests](data/discovery.json). The cases check ranking, format constraints and alternatives, family linkage, both tracks in a comparison, and withholding. Citations must match the original passage and belong to the release family where they appear.
+
+| Ranking | Full cases | Required passages | Tracklist comparisons | Withholding |
+| --- | ---: | ---: | ---: | ---: |
+| BM25 | 16/17 | 35/35 | 3/3 | 8/8 |
+| Semantic | 17/17 | 35/35 | 3/3 | 8/8 |
+| Hybrid | 17/17 | 35/35 | 3/3 | 8/8 |
+
+For “a choir on a sparse beat”, BM25 found *Glass Currents* but ranked *Sedge Relay* ahead of it. Semantic and hybrid ranked the expected release first. These are author-labelled checks on a tiny fictional collection. The set includes regression cases found while building. Inspect the [per-case report](reports/discovery.json) for the actual miss and judge relevance from the notes.
 
 ## How answers work
 
@@ -53,7 +78,7 @@ The labelled set has 10 development questions and 25 evaluation questions. It ex
 
 Search recall counts relevant passages found in the top five over all labelled relevant passages across the eight search questions. Citation support checks both that the quote is exact and that its source is labelled as supporting the specific question. Withholding counts partial, ambiguous and unanswerable cases that return the expected outcome, evidence and choices. The field constraints explain why the three modes tie on these answer questions.
 
-**BM25 is the default.** Hybrid ties it on this set, and the dense model misses some paraphrases. All modes miss the production credit on *Mudlark Phase* and ask for clarification on “the original Basin Window”. Those failures show the limits of the bounded question parser. The first evaluation pass also caught a plural “tracklists” bug, which was fixed with a regression test before this report was recorded. These are small, author-labelled results on a synthetic corpus.
+**BM25 is the default for catalogue Q&A.** Hybrid ties it on this set, and the dense model misses some paraphrases. All modes miss the production credit on *Mudlark Phase* and ask for clarification on “the original Basin Window”. Those failures show the limits of the bounded question parser. The first evaluation pass also caught a plural “tracklists” bug, which was fixed with a regression test before this report was recorded. These are small, author-labelled results on a synthetic corpus.
 
 Read the [per-case misses and run details](reports/evaluation.json), inspect the [labels](data/evaluation.json), or rerun the development split with `python3 evaluate.py --split development`.
 

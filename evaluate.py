@@ -61,19 +61,121 @@ def measure(archive, cases, mode):
     }
 
 
+def discovery_sources(result):
+    for record in result["matches"]:
+        sources = [record["sound"], *record["format_sources"], *record["proposed"]]
+        for comparison in record["comparisons"]:
+            sources.extend(comparison["original"].values())
+            sources.extend(comparison["reissue"].values())
+            sources.append(comparison["relationship"])
+        for source in sources:
+            yield record["code"], source
+    for proposal in result["proposals"]:
+        for source in [proposal["sound"], *proposal["sources"]]:
+            yield proposal["sound"]["code"], source
+
+
+def measure_discovery(archive, cases, mode):
+    family_found = family_total = evidence_found = evidence_total = 0
+    changes_correct = changes_total = withholding_correct = withholding_total = 0
+    invalid = []
+    failures = []
+    for case in cases:
+        result = archive.dig(case["question"], mode)
+        matches = {row["code"]: row for row in result["matches"]}
+        gold_families = set(case.get("families", []))
+        gold_sources = set(case.get("sources", []))
+        alternatives = [set(group) for group in case.get("source_alternatives", [])]
+        sources = list(discovery_sources(result))
+        source_ids = {source["id"] for _, source in sources}
+        issues = {}
+
+        invalid_sources = []
+        for owner, source in sources:
+            passage = archive.passages.get(source["id"])
+            owner_family = archive.releases[owner].get("reissue_of", owner)
+            source_release = archive.releases.get(source["code"], {})
+            source_family = source_release.get("reissue_of", source["code"])
+            if (passage is None or owner_family != source_family or
+                    any(getattr(passage, key) != source[key] for key in ("code", "title", "field", "text"))):
+                invalid.append({"id": case["id"], "source": source["id"]})
+                invalid_sources.append(source["id"])
+        if invalid_sources:
+            issues["invalid_sources"] = sorted(set(invalid_sources))
+
+        family_found += len(gold_families & matches.keys())
+        family_total += len(gold_families)
+        evidence_found += len(gold_sources & source_ids) + sum(bool(group & source_ids) for group in alternatives)
+        evidence_total += len(gold_sources) + len(alternatives)
+        if gold_families - matches.keys():
+            issues["missing_families"] = sorted(gold_families - matches.keys())
+        if case.get("only_families") and matches.keys() - gold_families:
+            issues["unexpected_families"] = sorted(matches.keys() - gold_families)
+        if gold_sources - source_ids:
+            issues["missing_sources"] = sorted(gold_sources - source_ids)
+        missing_alternatives = [sorted(group) for group in alternatives if not group & source_ids]
+        if missing_alternatives:
+            issues["missing_source_alternatives"] = missing_alternatives
+        if "first" in case and next(iter(matches), None) != case["first"]:
+            issues["expected_first"] = case["first"]
+
+        deltas = {
+            row["reissue"]["tracks"]["code"]: {key: row[key] for key in ("added", "original_only")}
+            for match in matches.values() for row in match["comparisons"]
+        }
+        for reissue, expected in case.get("changes", {}).items():
+            changes_total += 1
+            if deltas.get(reissue) == expected:
+                changes_correct += 1
+            else:
+                issues.setdefault("wrong_changes", []).append(reissue)
+
+        withholding_issues = {}
+        if case.get("no_matches") and matches:
+            withholding_issues["unexpected_matches"] = list(matches)
+        proposal_ids = sorted(source["id"] for row in result["proposals"] for source in row["sources"])
+        if "proposals" in case and proposal_ids != case["proposals"]:
+            withholding_issues["expected_proposals"] = case["proposals"]
+            withholding_issues["actual_proposals"] = proposal_ids
+        for code, expected in case.get("unconfirmed", {}).items():
+            actual = set(matches.get(code, {}).get("unmatched", []))
+            if set(expected) - actual:
+                withholding_issues["unconfirmed_missing"] = sorted(set(expected) - actual)
+        if any(key in case for key in ("no_matches", "proposals", "unconfirmed")):
+            withholding_total += 1
+            withholding_correct += not withholding_issues
+        issues.update(withholding_issues)
+        if issues:
+            failures.append({"id": case["id"], "top": list(matches), **issues})
+
+    return {
+        "full_case_passes": [len(cases) - len(failures), len(cases)],
+        "expected_family_recall": [family_found, family_total],
+        "required_source_recall": [evidence_found, evidence_total],
+        "tracklist_changes_correct": [changes_correct, changes_total],
+        "withholding_correctness": [withholding_correct, withholding_total],
+        "invalid_citations": invalid,
+        "failures": failures,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--split", choices=("development", "evaluation"), default="evaluation")
+    parser.add_argument("--discovery", action="store_true", help="Evaluate crate-digging and edition reasoning.")
     args = parser.parse_args()
-    cases = json.loads((DATA / "evaluation.json").read_text(encoding="utf-8"))
-    selected = [case for case in cases if case["split"] == args.split]
+    split = "discovery" if args.discovery else args.split
+    filename = "discovery.json" if args.discovery else "evaluation.json"
+    cases = json.loads((DATA / filename).read_text(encoding="utf-8"))
+    selected = cases if args.discovery else [case for case in cases if case["split"] == split]
+    evaluator = measure_discovery if args.discovery else measure
     archive = Archive.from_directory(DATA)
     try:
-        report = {mode: measure(archive, selected, mode) for mode in MODES}
+        report = {mode: evaluator(archive, selected, mode) for mode in MODES}
     finally:
         archive.close()
     print(json.dumps({
-        "split": args.split, "cases": len(selected), "python": platform.python_version(),
+        "split": split, "cases": len(selected), "python": platform.python_version(),
         "sqlite": sqlite3.sqlite_version, "modes": report,
     }, ensure_ascii=False, indent=2))
     if any(metrics["invalid_citations"] for metrics in report.values()):
