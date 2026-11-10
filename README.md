@@ -57,7 +57,7 @@ For “a choir on a sparse beat”, BM25 found *Glass Currents* but ranked *Sedg
 
 ### Portfolio audit
 
-The [12 review questions](data/audit.json) came from a separate reviewer exploring the live demo. They exposed failures around digital-only requests, original versus reissue formats, mixed format logic and “sounds like” returning the reference itself. The corrected version passes all 12 cases in each mode. These are regression checks because the review informed the fixes. The [audit report](reports/audit.json) includes the source and withholding counts. Use `python3 evaluate.py --audit` to rerun it.
+The [12 review questions](data/audit.json) came from a separate review of the crate-digging engine. They exposed failures around digital-only requests, original versus reissue formats, mixed format logic and “sounds like” returning the reference itself. The corrected version passes all 12 cases in each mode. These are regression checks because the review informed the fixes. The [audit report](reports/audit.json) includes the source and withholding counts. Use `python3 evaluate.py --audit` to rerun it.
 
 ## How answers work
 
