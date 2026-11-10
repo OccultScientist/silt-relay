@@ -1,0 +1,80 @@
+{
+  "split": "audit",
+  "cases": 12,
+  "python": "3.13.12",
+  "sqlite": "3.53.3",
+  "modes": {
+    "bm25": {
+      "full_case_passes": [
+        12,
+        12
+      ],
+      "expected_family_recall": [
+        7,
+        7
+      ],
+      "required_source_recall": [
+        14,
+        14
+      ],
+      "tracklist_changes_correct": [
+        0,
+        0
+      ],
+      "withholding_correctness": [
+        5,
+        5
+      ],
+      "invalid_citations": [],
+      "failures": []
+    },
+    "semantic": {
+      "full_case_passes": [
+        12,
+        12
+      ],
+      "expected_family_recall": [
+        7,
+        7
+      ],
+      "required_source_recall": [
+        14,
+        14
+      ],
+      "tracklist_changes_correct": [
+        0,
+        0
+      ],
+      "withholding_correctness": [
+        5,
+        5
+      ],
+      "invalid_citations": [],
+      "failures": []
+    },
+    "hybrid": {
+      "full_case_passes": [
+        12,
+        12
+      ],
+      "expected_family_recall": [
+        7,
+        7
+      ],
+      "required_source_recall": [
+        14,
+        14
+      ],
+      "tracklist_changes_correct": [
+        0,
+        0
+      ],
+      "withholding_correctness": [
+        5,
+        5
+      ],
+      "invalid_citations": [],
+      "failures": []
+    }
+  }
+}

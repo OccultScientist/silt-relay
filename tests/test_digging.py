@@ -87,3 +87,43 @@ class CrateDiggingTest(unittest.TestCase):
     def test_or_does_not_match_a_fragment_of_an_alternative(self):
         result = self.archive.dig("Find piano or warbling chords on vinyl or cassette.")
         self.assertEqual({row["code"] for row in result["matches"]}, {"SR007", "SR009"})
+
+    def test_digital_only_excludes_families_with_physical_editions(self):
+        for question in ("Find electric piano on digital only", "Only digital releases with piano"):
+            with self.subTest(question=question):
+                result = self.archive.dig(question)
+                self.assertEqual(result["matches"], [])
+                self.assertTrue(result["exclusive_formats"])
+
+    def test_physical_format_never_accepts_a_digital_only_release(self):
+        result = self.archive.dig("Find spacey chords and tight drums on a physical format")
+        self.assertTrue(result["matches"])
+        self.assertTrue(all(
+            any("vinyl" in label or label in {"cassette", "cd"} for label in row["formats"])
+            for row in result["matches"]
+        ))
+
+    def test_explicit_original_scope_does_not_borrow_reissue_format(self):
+        for question in ("Was the original Basin Window released on vinyl?", "Was SR007 released on vinyl?"):
+            with self.subTest(question=question):
+                self.assertEqual(self.archive.dig(question)["matches"], [])
+
+    def test_mixed_format_connectors_require_clarification(self):
+        result = self.archive.dig("Find vinyl or cassette and digital")
+        self.assertEqual(result["matches"], [])
+        self.assertIn("and", result["message"])
+        self.assertIn("or", result["message"])
+
+    def test_named_release_similarity_cites_the_reference_and_excludes_it(self):
+        result = self.archive.dig("Which records sound like Basin Window?")
+        self.assertEqual(result["reference"]["id"], "SR007:sound")
+        self.assertTrue(result["matches"])
+        self.assertNotIn("SR007", [row["code"] for row in result["matches"]])
+        for row in result["matches"]:
+            self.assertTrue(row["shared_cues"])
+
+    def test_format_followup_leaves_the_first_match_in_place(self):
+        result = self.archive.dig("Find the cassette release with warbling chords. Was it ever released on vinyl?")
+        first = result["matches"][0]
+        self.assertEqual(first["code"], "SR009")
+        self.assertEqual(first["format_check"], {"format": "vinyl", "status": "unconfirmed"})

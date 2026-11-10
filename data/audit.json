@@ -1,0 +1,14 @@
+[
+  {"id":"A01","question":"Find electric piano on digital only","no_matches":true},
+  {"id":"A02","question":"Find spacey chords and tight drums on a physical format","families":["SR009"],"allowed_families":["SR001","SR003","SR007","SR009"],"sources":["SR009:format"]},
+  {"id":"A03","question":"Which records sound like Basin Window?","families":["SR001"],"excluded_families":["SR007"],"reference":"SR007:sound","sources":["SR007:sound","SR021:sound"]},
+  {"id":"A04","question":"Find vinyl or cassette and digital","no_matches":true,"message_contains":"alternatives"},
+  {"id":"A05","question":"Find the cassette release with warbling chords. Was it ever released on vinyl?","first":"SR009","families":["SR009"],"sources":["SR009:sound","SR009:format"],"format_checks":{"SR009":{"format":"vinyl","status":"unconfirmed"}}},
+  {"id":"A06","question":"Find a bent synth with a heavy backbeat on digital","first":"SR013","families":["SR013"],"sources":["SR013:sound","SR013:format"]},
+  {"id":"A07","question":"Find records with loose breakbeats and muted brass on 12-inch wax","first":"SR003","families":["SR003"],"sources":["SR003:sound","SR003:format"]},
+  {"id":"A08","question":"Show the tracklist of the Glass Current vinyl edition","no_matches":true,"proposals":["SR004:edition"],"sources":["SR004:edition"]},
+  {"id":"A09","question":"I want liquid piano and saxophone on vinyl","first":"SR007","families":["SR007"],"sources":["SR007:sound","SR011:format"],"unconfirmed":{"SR007":["saxophone"]}},
+  {"id":"A10","question":"Bent synths and a heavy backbeat","first":"SR013","families":["SR013"],"sources":["SR013:sound"],"sound_cues":{"SR013":{"synths":"synth"}}},
+  {"id":"A11","question":"Was the original Basin Window released on vinyl?","no_matches":true,"sources":["SR007:format"],"excluded_sources":["SR011:format"]},
+  {"id":"A12","question":"Which digital singles have tight metallic drums?","allowed_families":["SR002","SR005","SR008","SR013","SR015","SR017","SR019"],"excluded_families":["SR006"]}
+]

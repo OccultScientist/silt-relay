@@ -4,7 +4,7 @@
 
 Start with a sound, an instrument or a mood across 21 fictional releases. Ask for a format and follow the matches to the release notes. For a linked reissue, the reader compares the original and reissue tracklists and shows where each change comes from.
 
-Try “mellow keys and a brushed break on vinyl” or “what did the vinyl reissue of Silt Thread add?”. The catalogue Q&A and ranking comparison are also available from the reader.
+Try “mellow keys and a brushed break on vinyl”, “which records sound like Basin Window?” or “what did the vinyl reissue of Silt Thread add?”. The catalogue Q&A and ranking comparison are also available from the reader.
 
 [Open the live demo](https://occultscientist.github.io/silt-relay/)
 
@@ -19,6 +19,7 @@ python3 silt_relay.py 'When did Glass Current come out, and did the vinyl ship?'
 python3 silt_relay.py 'When was Basin Window released?'
 python3 silt_relay.py --search --mode semantic 'horns and echoes'
 python3 evaluate.py --discovery
+python3 evaluate.py --audit
 python3 evaluate.py
 python3 -m unittest discover -s tests -v
 ```
@@ -40,7 +41,7 @@ Open [localhost:8000](http://127.0.0.1:8000). The first build downloads and veri
 2. **Join the editions.** An explicit catalogue link connects a reissue to its original. The sound note can be from one edition and the format from another, with each citation labelled separately. A proposed pressing is shown separately from released formats.
 3. **Compare the tracklists.** Compute additions and tracks listed only on the original directly from the two quoted tracklists. The comparison also exposes both dates, formats and the note documenting the reissue relationship.
 
-The search handles positive descriptions and a small set of format and relationship phrases. The cues are approximate and the notes describe fictional records. Format evidence establishes the edition documented in the archive.
+The search handles positive descriptions and a small set of format and relationship phrases. “Digital only” restricts the documented media, and an explicit original or catalogue number restricts which edition can supply the format. A follow-up such as “Was it ever released on vinyl?” checks the matches from the first request. Suggestions for “sounds like” quote the reference and candidate notes and show their shared wording. Mood cues are approximate, and partial sound matches flag descriptors the passage does not confirm.
 
 ## Discovery evaluation
 
@@ -53,6 +54,10 @@ Run `python3 evaluate.py --discovery` against the [17 labelled requests](data/di
 | Hybrid | 17/17 | 35/35 | 3/3 | 8/8 |
 
 For “a choir on a sparse beat”, BM25 found *Glass Currents* but ranked *Sedge Relay* ahead of it. Semantic and hybrid ranked the expected release first. These are author-labelled checks on a tiny fictional collection. The set includes regression cases found while building. Inspect the [per-case report](reports/discovery.json) for the actual miss and judge relevance from the notes.
+
+### Portfolio audit
+
+The [12 review questions](data/audit.json) came from a separate reviewer exploring the live demo. They exposed failures around digital-only requests, original versus reissue formats, mixed format logic and “sounds like” returning the reference itself. The corrected version passes all 12 cases in each mode. These are regression checks because the review informed the fixes. The [audit report](reports/audit.json) includes the source and withholding counts. Use `python3 evaluate.py --audit` to rerun it.
 
 ## How answers work
 

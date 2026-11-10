@@ -62,6 +62,10 @@ def measure(archive, cases, mode):
 
 
 def discovery_sources(result):
+    if result["reference"]:
+        yield result["reference"]["code"], result["reference"]
+    for source in result["format_conflicts"]:
+        yield source["code"], source
     for record in result["matches"]:
         sources = [record["sound"], *record["format_sources"], *record["proposed"]]
         for comparison in record["comparisons"]:
@@ -111,6 +115,25 @@ def measure_discovery(archive, cases, mode):
             issues["missing_families"] = sorted(gold_families - matches.keys())
         if case.get("only_families") and matches.keys() - gold_families:
             issues["unexpected_families"] = sorted(matches.keys() - gold_families)
+        unexpected_families = set(case.get("excluded_families", [])) & matches.keys()
+        if "allowed_families" in case:
+            unexpected_families |= matches.keys() - set(case["allowed_families"])
+        if unexpected_families:
+            issues["unexpected_families"] = sorted(unexpected_families)
+        unexpected_sources = set(case.get("excluded_sources", [])) & source_ids
+        if unexpected_sources:
+            issues["unexpected_sources"] = sorted(unexpected_sources)
+        if "reference" in case and (result["reference"] or {}).get("id") != case["reference"]:
+            issues["missing_reference"] = case["reference"]
+        if "message_contains" in case and case["message_contains"] not in result["message"]:
+            issues["expected_message"] = case["message_contains"]
+        for code, expected in case.get("format_checks", {}).items():
+            if matches.get(code, {}).get("format_check") != expected:
+                issues.setdefault("wrong_format_checks", []).append(code)
+        for code, expected in case.get("sound_cues", {}).items():
+            actual = matches.get(code, {}).get("matched", {})
+            if not expected.items() <= actual.items():
+                issues.setdefault("missing_sound_cues", []).append(code)
         if gold_sources - source_ids:
             issues["missing_sources"] = sorted(gold_sources - source_ids)
         missing_alternatives = [sorted(group) for group in alternatives if not group & source_ids]
@@ -162,13 +185,19 @@ def measure_discovery(archive, cases, mode):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--split", choices=("development", "evaluation"), default="evaluation")
-    parser.add_argument("--discovery", action="store_true", help="Evaluate crate-digging and edition reasoning.")
+    suite = parser.add_mutually_exclusive_group()
+    suite.add_argument("--discovery", action="store_true", help="Evaluate crate-digging and edition reasoning.")
+    suite.add_argument("--audit", action="store_true", help="Re-run fresh questions from the portfolio review.")
     args = parser.parse_args()
-    split = "discovery" if args.discovery else args.split
-    filename = "discovery.json" if args.discovery else "evaluation.json"
-    cases = json.loads((DATA / filename).read_text(encoding="utf-8"))
-    selected = cases if args.discovery else [case for case in cases if case["split"] == split]
-    evaluator = measure_discovery if args.discovery else measure
+    if args.discovery or args.audit:
+        split = "audit" if args.audit else "discovery"
+        selected = json.loads((DATA / f"{split}.json").read_text(encoding="utf-8"))
+        evaluator = measure_discovery
+    else:
+        split = args.split
+        cases = json.loads((DATA / "evaluation.json").read_text(encoding="utf-8"))
+        selected = [case for case in cases if case["split"] == split]
+        evaluator = measure
     archive = Archive.from_directory(DATA)
     try:
         report = {mode: evaluator(archive, selected, mode) for mode in MODES}

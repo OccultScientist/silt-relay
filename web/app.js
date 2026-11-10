@@ -163,7 +163,10 @@ function showSoundCues(card, record) {
 
 function showDig(result) {
   const count = result.matches.length;
-  title.textContent = count ? count + (count === 1 ? " match in the crate" : " matches in the crate") : "No supported matches";
+  const partialCount = result.matches.filter(record => record.partial_sound).length;
+  if (!count) title.textContent = "No supported matches";
+  else if (partialCount === count) title.textContent = "Only partial sound matches";
+  else title.textContent = count + (count === 1 ? " match in the crate" : " matches in the crate");
   if (result.message) {
     response.append(element("p", result.message));
     return;
@@ -172,20 +175,42 @@ function showDig(result) {
   const criteria = [];
   if (result.sound_terms.length) criteria.push("Sound · " + result.sound_terms.join(", "));
   if (result.formats.length) {
-    criteria.push("Format · " + result.formats.join(result.format_alternatives ? " or " : " and "));
+    const label = result.exclusive_formats ? "Documented only in · " : "Format · ";
+    criteria.push(label + result.formats.join(result.format_alternatives ? " or " : " and "));
   }
   if (result.vinyl_only) criteria.push("Confirmed vinyl only");
   if (result.reissues_only) criteria.push("Linked reissues only");
   if (criteria.length) response.append(element("p", criteria.join("  /  "), "dig-criteria"));
-  if (!count) response.append(element("p", "No sound note and documented edition satisfy this search. Try fewer terms or another format."));
+  if (result.reference) {
+    response.append(sourceNote(result.reference, "Reference sound · " + result.reference.title, true));
+    response.append(element("p", "Similar suggestions share wording from these sound notes.", "dig-criteria"));
+  }
+  if (result.format_conflicts.length) {
+    response.append(element("p", "The named edition’s format note does not support the requested format."));
+    for (const source of result.format_conflicts) response.append(sourceNote(source, "Recorded format · " + source.title, true));
+  } else if (!count) {
+    response.append(element("p", "No sound note and documented edition satisfy this search. Try fewer terms or another format."));
+  }
 
   const stack = element("div", "", "crate-stack");
   for (const record of result.matches) {
     const card = element("article", "", "crate-record");
     card.append(element("p", record.code + " / " + record.artist, "eyebrow"));
     card.append(element("h3", record.title));
+    if (record.partial_sound) card.append(element("p", "Partial sound match", "eyebrow"));
     showSoundCues(card, record);
+    if (record.shared_cues.length) {
+      card.append(element("p", "Shared wording with the reference · " + record.shared_cues.join(", "), "dig-criteria"));
+    }
     card.append(sourceNote(record.sound, "Sound note · " + record.sound.title, true));
+    if (record.format_check) {
+      const messages = {
+        documented: "Follow-up · the cited notes document " + record.format_check.format,
+        proposed: "Follow-up · " + record.format_check.format + " was proposed. Release is unconfirmed.",
+        unconfirmed: "Follow-up · the cited format notes do not confirm " + record.format_check.format + ".",
+      };
+      card.append(element("p", messages[record.format_check.status], "dig-criteria"));
+    }
     if (record.formats.length) {
       card.append(element("h4", "Documented formats · " + record.formats.join(", ")));
     }
@@ -269,7 +294,7 @@ function showComparison(rankings) {
 }
 
 function startWorker() {
-  const worker = new Worker("worker.js?v=crate", { type: "module" });
+  const worker = new Worker("worker.js?v=scope", { type: "module" });
   function run(action, focus = true) {
     const value = question.value.trim();
     if (!ready || busy || !value) return;
