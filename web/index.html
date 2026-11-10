@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search 20 fictional drum &amp; bass release notes and inspect the evidence behind each answer.">
+  <title>Silt Relay · Catalogue reader</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#reader">Skip to the catalogue reader</a>
+  <header class="masthead">
+    <div class="frame masthead-inner">
+      <div class="wordmark"><span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>SILT RELAY</div>
+      <nav aria-label="Project links">
+        <a href="https://github.com/OccultScientist/silt-relay">Source</a>
+        <a href="https://github.com/OccultScientist/silt-relay/blob/main/reports/evaluation.json">Evaluation</a>
+      </nav>
+    </div>
+  </header>
+  <main class="frame" id="reader">
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow">SR001–SR020 <span aria-hidden="true">/</span> Fictional label archive</p>
+      <h1 id="title">Ask the catalogue</h1>
+      <p>Twenty invented drum &amp; bass releases. Follow an answer back to the release note it came from, or compare how three search methods rank the same query.</p>
+    </section>
+
+    <section class="workbench" aria-label="Catalogue question and results">
+      <div class="panel query">
+        <form id="question-form">
+          <label for="question">Your question</label>
+          <textarea id="question" rows="3" maxlength="400" required spellcheck="false">When did Glass Current come out, and did the vinyl ship?</textarea>
+          <div class="controls">
+            <div class="select-field">
+              <label for="mode">Retrieval mode</label>
+              <select id="mode">
+                <option value="bm25">BM25 · keyword</option>
+                <option value="semantic">GloVe · semantic</option>
+                <option value="hybrid">Hybrid · rank fusion</option>
+              </select>
+            </div>
+            <button type="submit" id="ask" value="answer" disabled>Ask</button>
+            <button type="submit" id="compare" class="secondary" value="compare" disabled>Compare ranking</button>
+          </div>
+          <p id="status" class="status" role="status">Loading the local catalogue engine…</p>
+          <noscript><p>Enable JavaScript to run the catalogue in your browser, or use the Python CLI from the source repository.</p></noscript>
+        </form>
+        <div class="examples" aria-label="Example questions">
+          <span class="eyebrow">Try an example</span>
+          <button class="chip" type="button" data-example="When did SR004 come out?">Cited answer</button>
+          <button class="chip" type="button" data-example="When did Glass Current come out, and did the vinyl ship?">Partial answer</button>
+          <button class="chip" type="button" data-example="What format was Basin Window?">Ambiguous title</button>
+          <button class="chip" type="button" data-example="How many copies did SR004 sell?">Missing evidence</button>
+          <button class="chip" type="button" data-example="horns and echoes" data-compare>Compare a paraphrase</button>
+        </div>
+      </div>
+      <section id="results" class="panel results" aria-labelledby="result-title" aria-busy="true">
+        <p class="eyebrow">Catalogue response</p>
+        <h2 id="result-title" tabindex="-1">Awaiting a question</h2>
+        <div id="response"><p>Ask about a date, format, tracklist, credit, sound or edition. Use a release title or catalogue number.</p></div>
+      </section>
+    </section>
+    <footer>
+      <p>Fictional release notes. Questions are processed in your browser. The demo uses an extractive Python engine and needs no API key.</p>
+      <p><a href="https://github.com/OccultScientist/silt-relay/blob/main/README.md#evaluation">Methods and measured results</a> · <a href="runtime/NOTICE.txt">Runtime notices</a></p>
+    </footer>
+  </main>
+</body>
+</html>

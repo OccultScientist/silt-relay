@@ -1,0 +1,7 @@
+This demo serves an unmodified subset of the Pyodide 314.0.0 distribution.
+Pyodide source and build instructions: https://github.com/pyodide/pyodide/tree/314.0.0
+Pyodide licence and third-party notices: LICENSE-Pyodide.txt
+CPython 3.14.2 source: https://github.com/python/cpython/tree/v3.14.2
+CPython licence: LICENSE-CPython.txt
+SQLite source and public domain notice: https://sqlite.org/copyright.html
+Vector weights and provenance: ../data/VECTORS.md

@@ -4,6 +4,8 @@
 
 The catalogue contains 20 invented releases. Ask about a date, format, tracklist, credit, sound or edition. The answer opens the exact release-note passage it came from. Try asking about a vinyl pressing that was proposed, sales figures that were never recorded, or a title shared by two editions.
 
+[Open the live demo](https://occultscientist.github.io/silt-relay/)
+
 ## Run it
 
 Clone the repository and run these commands in its root. Use Python 3.9+ with SQLite FTS5 enabled. The corpus and the small, quantised embedding table are bundled. The CLI works offline with the Python standard library.
@@ -17,6 +19,15 @@ python3 -m unittest discover -s tests -v
 ```
 
 The first command returns one claim with `SR004:date` and a separate unanswered part. The second offers two catalogue numbers so you can ask again. Use `--mode bm25`, `semantic` or `hybrid` with either command.
+
+## Run the browser interface locally
+
+```sh
+python3 tools/build_site.py
+python3 -m http.server 8000 --bind 127.0.0.1 --directory _site
+```
+
+Open [localhost:8000](http://127.0.0.1:8000). The first build downloads and verifies the pinned Pyodide runtime. The staged site is about 14 MB before transport compression. It runs the same Python module in a browser worker. GitHub Pages serves the static build from the `gh-pages` branch, including the runtime, so questions never leave the browser.
 
 ## How answers work
 

@@ -57,6 +57,43 @@ class ArchiveTest(unittest.TestCase):
         self.assertEqual(result["outcome"], "insufficient_evidence")
         self.assertFalse(result["claims"])
 
+    def test_date_for_narrower_scope_is_withheld(self):
+        questions = (
+            "When was the Glass Current vinyl released?",
+            "When was the Glass Current 12-inch released?",
+            "When was Glass Current released in the US?",
+            "When did Shear Line from Glass Current come out?",
+        )
+        for question in questions:
+            with self.subTest(question=question):
+                result = self.archive.answer(question)
+                self.assertEqual(result["outcome"], "insufficient_evidence")
+                self.assertFalse(result["claims"])
+
+    def test_mixed_code_and_title_are_both_resolved(self):
+        result = self.archive.answer("Compare the formats of SR003 and After the Gauge.")
+        self.assertEqual({claim["source_id"] for claim in result["claims"]}, {"SR003:format", "SR009:format"})
+
+    def test_unknown_comparison_target_is_withheld(self):
+        result = self.archive.answer("Compare the tracklists for SR004 and Sunken Semaphore.")
+        self.assertEqual(result["outcome"], "partially_answered")
+        self.assertEqual([claim["source_id"] for claim in result["claims"]], ["SR004:tracks"])
+
+    def test_fields_attach_to_their_own_releases(self):
+        for question in (
+            "Compare the date of SR004 with the tracklist of SR005.",
+            "When did Glass Current come out? What tracks were on Glass Currents?",
+        ):
+            with self.subTest(question=question):
+                result = self.archive.answer(question)
+                self.assertEqual(result["outcome"], "answered")
+                self.assertEqual({claim["source_id"] for claim in result["claims"]}, {"SR004:date", "SR005:tracks"})
+
+    def test_catalogue_number_can_disambiguate_a_title(self):
+        result = self.archive.answer("When was Basin Window released (SR007)?")
+        self.assertEqual(result["outcome"], "answered")
+        self.assertEqual([claim["source_id"] for claim in result["claims"]], ["SR007:date"])
+
     def test_two_exact_codes_can_be_answered_together(self):
         result = self.archive.answer("Compare the formats of SR003 and SR009.")
         self.assertEqual(result["outcome"], "answered")

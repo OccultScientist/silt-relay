@@ -36,7 +36,8 @@ def measure(archive, cases, mode):
         source_text = {row["id"]: row["text"] for row in result["retrieved"]}
         for claim in result["claims"]:
             source_id = claim["source_id"]
-            matches = source_text.get(source_id) == claim["text"] == archive.passages[source_id].text
+            passage = archive.passages.get(source_id)
+            matches = passage is not None and source_text.get(source_id) == claim["text"] == passage.text
             if not matches:
                 unsafe.append(case["id"])
             supported += matches and source_id in gold

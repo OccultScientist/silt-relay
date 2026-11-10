@@ -27,7 +27,7 @@ FIELDS = {
 UNSUPPORTED = re.compile(
     r"\b(?:sales?|sold|sell|price|cost|streams?|chart(?:ed|s)?|shipment|shipp?ed|ship|dispatch(?:ed)?|"
     r"manufactur\w*|pressing size|how many copies|who (?:mixed|mastered|produced)|"
-    r"bpm|tempo|key signature|isrc|barcode|spotify|bandcamp|royalt\w*|review\w*|"
+    r"bpm|tempo|key signature|isrc|barcode|spotify|bandcamp|rights|owns?|ownership|licen[cs]\w*|royalt\w*|review\w*|"
     r"why|best|recommend\w*|first ever|release time|time zone|label owner)\b"
 )
 STOP = frozenset("""
@@ -177,11 +177,9 @@ class Archive:
         ]
 
     def resolve(self, text):
-        explicit = tuple(dict.fromkeys(re.findall(r"\bsr\d{3}\b", text.casefold())))
-        if explicit:
-            return [{code.upper()} if code.upper() in self.releases else set() for code in explicit]
-
         tokens = words(text)
+        explicit = list(dict.fromkeys(word.upper() for word in tokens if re.fullmatch(r"sr\d{3}", word)))
+        qualifiers = {code.upper() for code in re.findall(r"\((sr\d{3})\)", text, re.IGNORECASE)}
         matches = []
         for start in range(len(tokens)):
             for end in range(len(tokens), start, -1):
@@ -189,11 +187,14 @@ class Archive:
                 if codes:
                     matches.append((start, end, codes))
                     break
-        return [
-            codes for start, end, codes in matches
-            if not any(other_start <= start and end <= other_end and (start, end) != (other_start, other_end)
-                       for other_start, other_end, _ in matches)
-        ]
+        groups = [{code} if code in self.releases else set() for code in explicit]
+        for start, end, codes in matches:
+            if any(other_start <= start and end <= other_end and (start, end) != (other_start, other_end)
+                   for other_start, other_end, _ in matches):
+                continue
+            if not codes.intersection(qualifiers) and codes not in groups:
+                groups.append(codes)
+        return groups
 
     def answer(self, question, mode=DEFAULT_MODE):
         question = question_text(question)
@@ -218,12 +219,13 @@ class Archive:
             return result
 
         parts = re.split(
-            r"\s*;\s*|,?\s+and\s+(?=(?:did|does|was|were|who|what|which|when|how|"
-            r"where|whether|in what|the (?:format|tracklist|credits))\b)",
+            r"\s*[;?]\s*|,?\s+and\s+(?=(?:did|does|was|were|who|what|which|when|how|where|"
+            r"whether|in what)\b)|\s+(?:and|with)\s+(?=(?:the )?(?:dates?|formats?|tracklists?|"
+            r"credits?|sound|edition)\s+of\b)",
             question, flags=re.IGNORECASE,
         )
         evidence = {}
-        for part in parts:
+        for part in filter(None, parts):
             groups = self.resolve(part)
             if not groups and len(targets) == 1 and re.search(
                 r"\b(?:it|its|that release)\b|^did the vinyl\b", part, re.IGNORECASE
@@ -241,11 +243,12 @@ class Archive:
                 continue
 
             fields = [field for field, pattern in FIELDS.items() if re.search(pattern, intent)]
-            if "date" in fields and re.search(
-                r"\b(?:on|in) (?:the )?(?:vinyl|wax|cassette|digital)|"
-                r"\b(?:vinyl|cassette|digital) (?:release|edition|pressing)\b", intent
-            ):
-                result["unanswered"].append("The notes don’t give separate release dates by format.")
+            date_words = {
+                "date", "dates", "release", "released", "come", "came", "out",
+                "compare", "catalogue", "number", "original", "format", "formats",
+            }
+            if "date" in fields and set(keywords(intent)) - date_words:
+                result["unanswered"].append("I can cite the release date for the catalogue entry as a whole.")
                 continue
             if "tracks" in fields and "sound" in fields and re.search(r"\b(?:sound|style|describe)\b", intent):
                 fields.remove("tracks")
@@ -257,6 +260,15 @@ class Archive:
             if not groups:
                 result["unanswered"].append(f"I couldn't identify the release in “{part.strip()}”")
                 continue
+            if len(groups) > 1 and len(fields) > 1:
+                result["unanswered"].append("Ask about one catalogue detail at a time when comparing releases.")
+                continue
+            if len(groups) == 1:
+                segments = re.split(r"\s+(?:and|or|with)\s+", part, flags=re.IGNORECASE)
+                for segment in segments[1:]:
+                    if self.resolve(segments[0]) and not self.resolve(segment) and keywords(segment):
+                        result["unanswered"].append(f"I couldn't identify a second release in “{segment.strip()}”")
+                        break
             for group in groups:
                 if not group:
                     result["unanswered"].append("That catalogue number is missing from the archive.")
